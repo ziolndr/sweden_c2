@@ -8,7 +8,7 @@ Usage:
     pip install fastapi uvicorn
     uvicorn swedish_c2_api:app --host 0.0.0.0 --port 8002 --reload
 
-Created by: Joel Trout & Erik Andersson
+Created by: Joel Trout
 For: Swedish Armed Forces / FOI validation
 """
 
@@ -285,7 +285,7 @@ async def process_c2_scenario(request: C2Request):
         threat, assets, context = api_to_doctrine_models(request)
         
         # Initialize C2 service
-        service = SwedishC2Service(arbiter_url="http://0.0.0.0:8000/v1/compare")
+        service = SwedishC2Service(arbiter_url="api.arbiter.traut.ai")
         
         # Process scenario
         result = service.process_multi_sensor_scenario(

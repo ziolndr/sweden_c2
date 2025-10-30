@@ -14,6 +14,7 @@ For: Swedish Armed Forces / FOI validation
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from enum import Enum
@@ -39,6 +40,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def serve_frontend():
+    """Serve the Swedish C2 interface"""
+    return FileResponse("index.html")
 
 # ============================================================================
 # PYDANTIC MODELS FOR API

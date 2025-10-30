@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWEDISH C2 - Multi-Domain Decision Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --dark: #0a0a0a;
+            --border: #1a1a1a;
+            --gray: #64748b;
+            --white: #f1f5f9;
+            --blue: #006AA7;  /* Swedish blue */
+            --yellow: #FECC00; /* Swedish yellow */
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', 'SF Mono', 'Monaco', monospace;
+            background: var(--black);
+            color: var(--white);
+            font-size: 13px;
+            line-height: 1.4;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 48px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: linear-gradient(90deg, var(--blue) 0%, var(--black) 50%);
+        }
+
+        .logo {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .flag {
+            width: 32px;
+            height: 20px;
+            background: linear-gradient(to bottom, var(--blue) 40%, var(--yellow) 40% 60%, var(--blue) 60%);
+            position: relative;
+        }
+
+        .flag::after {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--yellow);
+        }
+
+        .system-status {
+            font-size: 11px;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .main {
+            height: calc(100vh - 48px);
+            display: grid;
+            grid-template-columns: 360px 1fr 400px;
+        }
+
+        .column {
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .column:last-child {
+            border-right: none;
+        }
+
+        .column-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gray);
+            background: var(--dark);
+        }
+
+        .section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gray);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sensor-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            background: var(--blue);
+            color: var(--white);
+            border-radius: 2px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            color: var(--white);
+            font-family: inherit;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .sensor-contact {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .sensor-contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .remove-sensor {
+            background: transparent;
+            border: 1px solid var(--red);
+            color: var(--red);
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-sensor:hover {
+            background: var(--red);
+            color: var(--white);
+        }
+
+        .add-sensor-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark);
+            border: 1px dashed var(--border);
+            color: var(--gray);
+            font-family: inherit;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-sensor-btn:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-row label {
+            font-size: 11px;
+            color: var(--white);
+            cursor: pointer;
+        }
+
+        .asset-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+
+        .asset-info {
+            flex: 1;
+        }
+
+        .asset-name {
+            font-size: 11px;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .asset-meta {
+            font-size: 9px;
+            color: var(--gray);
+        }
+
+        .asset-toggle {
+            width: 40px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .asset-toggle.active {
+            background: var(--green);
+        }
+
+        .asset-toggle::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--white);
+            top: 3px;
+            left: 3px;
+            transition: left 0.2s;
+        }
+
+        .asset-toggle.active::after {
+            left: 19px;
+        }
+
+        /* Center Column - Recommendations */
+        .recommendations {
+            padding: 20px;
+        }
+
+        .rec-card {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .rec-card:hover {
+            border-color: var(--blue);
+        }
+
+        .rec-card.selected {
+            border-color: var(--yellow);
+            border-width: 2px;
+            padding: 19px;
+        }
+
+        .rec-rank {
+            font-size: 9px;
+            color: var(--gray);
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .rec-coherence {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .coherence-high { color: var(--green); }
+        .coherence-medium { color: var(--amber); }
+        .coherence-low { color: var(--gray); }
+
+        .confidence-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+
+        .rec-title {
+            font-size: 12px;
+            margin-bottom: 12px;
+            color: var(--white);
+            line-height: 1.4;
+        }
+
+        .rec-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--gray);
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .rec-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .rec-meta-label {
+            font-size: 9px;
+            color: var(--gray);
+        }
+
+        .rec-meta-value {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .sovereignty-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 9px;
+            border-radius: 2px;
+            margin-top: 8px;
+        }
+
+        .sovereignty-maintained {
+            background: var(--blue);
+            color: var(--white);
+        }
+
+        .nato-required {
+            background: var(--amber);
+            color: var(--black);
+        }
+
+        /* Right Column - Detail */
+        .detail-empty {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--gray);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .detail-content {
+            padding: 20px;
+        }
+
+        .detail-coherence {
+            text-align: center;
+            padding: 32px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .detail-coherence-label {
+            font-size: 10px;
+            color: var(--gray);
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+
+        .detail-coherence-value {
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+        }
+
+        .detail-label {
+            font-size: 10px;
+            color: var(--gray);
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: var(--white);
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .systems-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .system-badge {
+            padding: 4px 8px;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--gray);
+        }
+
+        .execute-button {
+            width: 100%;
+            height: 56px;
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .execute-button:hover {
+            background: #005a8f;
+        }
+
+        .execute-button.holding {
+            background: var(--yellow);
+            color: var(--black);
+        }
+
+        .execute-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--white);
+            width: 0%;
+            transition: width 2s linear;
+        }
+
+        .execute-button.holding .execute-progress {
+            width: 100%;
+        }
+
+        .calculating-indicator {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+            font-size: 11px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--border);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sensor-agreement {
+            padding: 12px;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .agreement-label {
+            font-size: 9px;
+            color: var(--gray);
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .agreement-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .agreement-fill {
+            height: 100%;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .agreement-high { background: var(--green); }
+        .agreement-medium { background: var(--amber); }
+        .agreement-low { background: var(--red); }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="flag"></div>
+            <span>SWEDISH C2</span>
+        </div>
+        <div class="system-status">
+            <div class="status-dot"></div>
+            <span id="status-text">OPERATIVT</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- LEFT COLUMN: SENSOR INPUT -->
+        <div class="column">
+            <div class="column-header">SENSORDATA & KONTEXT</div>
+            
+            <!-- SENSOR CONTACTS -->
+            <div class="section">
+                <div class="section-title">
+                    <span>SENSORKONTAKTER</span>
+                </div>
+                
+                <div id="sensor-contacts">
+                    <!-- Sensor contact 1 (9LV) -->
+                    <div class="sensor-contact" data-sensor="1">
+                        <div class="sensor-contact-header">
+                            <span class="sensor-badge">9LV</span>
+                            <button class="remove-sensor" onclick="removeSensor(1)">×</button>
+                        </div>
+                        <select class="input-field" data-field="source">
+                            <option value="9LV" selected>9LV (Naval)</option>
+                            <option value="GBA_C2">GBA C2 (Air Defense)</option>
+                            <option value="BMS">BMS (Ground)</option>
+                            <option value="NATO_AWE">NATO AWE</option>
+                        </select>
+                        <input type="text" class="input-field" data-field="track_id" value="UNKNOWN-47" placeholder="Track ID">
+                        <div class="input-row">
+                            <input type="number" class="input-field" data-field="bearing" value="95" placeholder="Bäring (°)">
+                            <input type="number" class="input-field" data-field="range" value="87" step="0.1" placeholder="Avstånd (nm)">
+                        </div>
+                        <div class="input-row">
+                            <input type="number" class="input-field" data-field="altitude" value="8500" placeholder="Höjd (m)">
+                            <input type="number" class="input-field" data-field="speed" value="420" placeholder="Hastighet (kts)">
+                        </div>
+                        <input type="number" class="input-field" data-field="confidence" value="78" min="0" max="100" placeholder="Tillförlitlighet (%)">
+                        <input type="text" class="input-field" data-field="classification" value="Possible transport" placeholder="Klassificering">
+                    </div>
+
+                    <!-- Sensor contact 2 (GBA C2) -->
+                    <div class="sensor-contact" data-sensor="2">
+                        <div class="sensor-contact-header">
+                            <span class="sensor-badge">GBA C2</span>
+                            <button class="remove-sensor" onclick="removeSensor(2)">×</button>
+                        </div>
+                        <select class="input-field" data-field="source">
+                            <option value="9LV">9LV (Naval)</option>
+                            <option value="GBA_C2" selected>GBA C2 (Air Defense)</option>
+                            <option value="BMS">BMS (Ground)</option>
+                            <option value="NATO_AWE">NATO AWE</option>
+                        </select>
+                        <input type="text" class="input-field" data-field="track_id" value="AIR-CONTACT-12" placeholder="Track ID">
+                        <div class="input-row">
+                            <input type="number" class="input-field" data-field="bearing" value="92" placeholder="Bäring (°)">
+                            <input type="number" class="input-field" data-field="range" value="84" step="0.1" placeholder="Avstånd (nm)">
+                        </div>
+                        <div class="input-row">
+                            <input type="number" class="input-field" data-field="altitude" value="8200" placeholder="Höjd (m)">
+                            <input type="number" class="input-field" data-field="speed" value="435" placeholder="Hastighet (kts)">
+                        </div>
+                        <input type="number" class="input-field" data-field="confidence" value="85" min="0" max="100" placeholder="Tillförlitlighet (%)">
+                        <input type="text" class="input-field" data-field="classification" value="Non-standard transponder" placeholder="Klassificering">
+                    </div>
+                </div>
+
+                <button class="add-sensor-btn" onclick="addSensor()">+ LÄGG TILL SENSOR</button>
+            </div>
+
+            <!-- OPERATIONAL CONTEXT -->
+            <div class="section">
+                <div class="section-title">OPERATIVT LÄGE</div>
+                
+                <input type="text" class="input-field" id="location" value="Baltic Sea, near Gotland" placeholder="Plats">
+                
+                <select class="input-field" id="priority">
+                    <option value="Critical">KRITISK</option>
+                    <option value="High" selected>HÖG</option>
+                    <option value="Medium">MELLAN</option>
+                    <option value="Low">LÅG</option>
+                </select>
+
+                <input type="number" class="input-field" id="time-to-boundary" value="12" step="0.1" placeholder="Tid till gräns (min)">
+                
+                <select class="input-field" id="weather">
+                    <option value="Clear">Klart väder</option>
+                    <option value="Low visibility" selected>Låg sikt</option>
+                    <option value="Overcast">Molnigt</option>
+                    <option value="Poor">Dåligt väder</option>
+                </select>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="nato-active" checked>
+                    <label for="nato-active">NATO Air Policing aktiv</label>
+                </div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="allied-aircraft">
+                    <label for="allied-aircraft">Allierade flygplan närvarande</label>
+                </div>
+
+                <input type="text" class="input-field" id="historical-pattern" value="Russian intelligence flights monthly" placeholder="Historiskt mönster">
+            </div>
+
+            <!-- AVAILABLE ASSETS -->
+            <div class="section">
+                <div class="section-title">TILLGÄNGLIGA SYSTEM</div>
+
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-name">JAS 39 Gripen QRA</div>
+                        <div class="asset-meta">F17 Ronneby · 15 min beredskap</div>
+                    </div>
+                    <div class="asset-toggle active" data-asset="gripen" onclick="toggleAsset('gripen')"></div>
+                </div>
+
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-name">GBA C2 IRIS-T</div>
+                        <div class="asset-meta">Gotland · 40km räckvidd</div>
+                    </div>
+                    <div class="asset-toggle active" data-asset="iris" onclick="toggleAsset('iris')"></div>
+                </div>
+
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-name">9LV Naval System</div>
+                        <div class="asset-meta">HMS Karlstad · 160km räckvidd</div>
+                    </div>
+                    <div class="asset-toggle active" data-asset="naval" onclick="toggleAsset('naval')"></div>
+                </div>
+
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-name">Electronic Warfare</div>
+                        <div class="asset-meta">Gotland EW Site · 50km räckvidd</div>
+                    </div>
+                    <div class="asset-toggle active" data-asset="ew" onclick="toggleAsset('ew')"></div>
+                </div>
+
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-name">RBS 70 MANPADS</div>
+                        <div class="asset-meta">Mobile · 5km räckvidd</div>
+                    </div>
+                    <div class="asset-toggle" data-asset="rbs70" onclick="toggleAsset('rbs70')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER COLUMN: RECOMMENDATIONS -->
+        <div class="column" id="center-column">
+            <div class="column-header">REKOMMENDATIONER</div>
+            
+            <div id="calculating-view" class="calculating-indicator">
+                <div class="spinner"></div>
+                <div>BERÄKNAR ALTERNATIV...</div>
+            </div>
+
+            <div id="recommendations-view" class="recommendations hidden">
+                <div class="sensor-agreement">
+                    <div class="agreement-label">SENSORÖVERENSSTÄMMELSE</div>
+                    <div class="agreement-bar">
+                        <div class="agreement-fill" id="agreement-fill"></div>
+                    </div>
+                </div>
+                <div id="recommendations-container"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: DETAIL -->
+        <div class="column" id="right-column">
+            <div class="column-header">DETALJER</div>
+            
+            <div id="detail-empty" class="detail-empty">
+                Justera sensordata eller välj tillgängliga system för att generera taktiska rekommendationer
+            </div>
+
+            <div id="detail-content" class="detail-content hidden">
+                <!-- Strategy detail will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8002/v1/c2';  // Swedish C2 API
+        let calculationTimeout = null;
+        let selectedStrategy = null;
+        let allRecommendations = [];
+        let isCalculating = false;
+        let sensorCount = 2;
+
+        const activeAssets = {
+            gripen: true,
+            iris: true,
+            naval: true,
+            ew: true,
+            rbs70: false
+        };
+
+        // Auto-calculate with debounce
+        function autoCalculate() {
+            if (calculationTimeout) clearTimeout(calculationTimeout);
+            calculationTimeout = setTimeout(() => {
+                calculateRecommendations();
+            }, 500);
+        }
+
+        function toggleAsset(asset) {
+            activeAssets[asset] = !activeAssets[asset];
+            const toggle = document.querySelector(`[data-asset="${asset}"]`);
+            toggle.classList.toggle('active');
+            autoCalculate();
+        }
+
+        function addSensor() {
+            sensorCount++;
+            const container = document.getElementById('sensor-contacts');
+            
+            const sensorDiv = document.createElement('div');
+            sensorDiv.className = 'sensor-contact';
+            sensorDiv.setAttribute('data-sensor', sensorCount);
+            
+            sensorDiv.innerHTML = `
+                <div class="sensor-contact-header">
+                    <span class="sensor-badge">BMS</span>
+                    <button class="remove-sensor" onclick="removeSensor(${sensorCount})">×</button>
+                </div>
+                <select class="input-field" data-field="source">
+                    <option value="9LV">9LV (Naval)</option>
+                    <option value="GBA_C2">GBA C2 (Air Defense)</option>
+                    <option value="BMS" selected>BMS (Ground)</option>
+                    <option value="NATO_AWE">NATO AWE</option>
+                </select>
+                <input type="text" class="input-field" data-field="track_id" value="TRACK-${sensorCount}" placeholder="Track ID">
+                <div class="input-row">
+                    <input type="number" class="input-field" data-field="bearing" value="95" placeholder="Bäring (°)">
+                    <input type="number" class="input-field" data-field="range" value="85" step="0.1" placeholder="Avstånd (nm)">
+                </div>
+                <div class="input-row">
+                    <input type="number" class="input-field" data-field="altitude" value="8000" placeholder="Höjd (m)">
+                    <input type="number" class="input-field" data-field="speed" value="400" placeholder="Hastighet (kts)">
+                </div>
+                <input type="number" class="input-field" data-field="confidence" value="70" min="0" max="100" placeholder="Tillförlitlighet (%)">
+                <input type="text" class="input-field" data-field="classification" value="Unknown" placeholder="Klassificering">
+            `;
+            
+            container.appendChild(sensorDiv);
+            
+            // Add change listeners
+            sensorDiv.querySelectorAll('.input-field').forEach(input => {
+                input.addEventListener('change', autoCalculate);
+                input.addEventListener('input', autoCalculate);
+            });
+        }
+
+        function removeSensor(id) {
+            const sensor = document.querySelector(`[data-sensor="${id}"]`);
+            if (sensor && document.querySelectorAll('.sensor-contact').length > 1) {
+                sensor.remove();
+                autoCalculate();
+            }
+        }
+    
+   
+async function calculateRecommendations() {
+    if (isCalculating) return;
+    isCalculating = true;
+
+    document.getElementById('status-text').textContent = 'BERÄKNAR';
+    document.getElementById('calculating-view').classList.remove('hidden');
+    document.getElementById('recommendations-view').classList.add('hidden');
+
+    // Collect sensor contacts
+    const contacts = [];
+    document.querySelectorAll('.sensor-contact').forEach(sensor => {
+        const fields = {};
+        sensor.querySelectorAll('[data-field]').forEach(input => {
+            const field = input.getAttribute('data-field');
+            fields[field] = input.value;
+        });
+
+        contacts.push({
+            source: fields.source,
+            track_id: fields.track_id,
+            bearing: parseInt(fields.bearing) || 0,
+            range_nm: parseFloat(fields.range) || 0,
+            altitude_m: parseInt(fields.altitude) || 0,
+            speed_knots: parseInt(fields.speed) || 0,
+            confidence: parseFloat(fields.confidence) / 100 || 0.5,
+            classification: fields.classification,
+            iff_response: null,
+            data_age_seconds: 0,
+            ecm_detected: false,
+            platform_name: null
+        });
+    });
+
+    // Calculate averages for threat estimation
+    const avgBearing = Math.round(contacts.reduce((sum, c) => sum + c.bearing, 0) / contacts.length);
+    const avgRange = contacts.reduce((sum, c) => sum + c.range_nm, 0) / contacts.length;
+
+    // Build assets array
+    const assets = [];
+    
+    if (activeAssets.gripen) {
+        assets.push({
+            system_type: "JAS 39 Gripen QRA",
+            count: 2,
+            ready_state: "STANDBY_15MIN",
+            effective_range_km: 800,
+            response_time_minutes: 15,
+            cost_per_engagement: 200000,
+            success_rate: 0.95,
+            location: "F17 Ronneby",
+            requires_nato_clearance: false,
+            requires_swedish_clearance: true
+        });
+    }
+
+    if (activeAssets.iris) {
+        assets.push({
+            system_type: "GBA C2 IRIS-T",
+            count: 4,
+            ready_state: "READY",
+            effective_range_km: 40,
+            response_time_minutes: 2,
+            cost_per_engagement: 500000,
+            success_rate: 0.93,
+            location: "Gotland",
+            requires_nato_clearance: false,
+            requires_swedish_clearance: true
+        });
+    }
+
+    if (activeAssets.naval) {
+        assets.push({
+            system_type: "9LV Naval System",
+            count: 2,
+            ready_state: "READY",
+            effective_range_km: 160,
+            response_time_minutes: 1,
+            cost_per_engagement: 1000000,
+            success_rate: 0.90,
+            location: "HMS Karlstad",
+            requires_nato_clearance: false,
+            requires_swedish_clearance: true
+        });
+    }
+
+    if (activeAssets.ew) {
+        assets.push({
+            system_type: "Electronic Warfare System",
+            count: 1,
+            ready_state: "READY",
+            effective_range_km: 50,
+            response_time_minutes: 0,
+            cost_per_engagement: 0,
+            success_rate: 0.70,
+            location: "Gotland EW Site",
+            requires_nato_clearance: false,
+            requires_swedish_clearance: true
+        });
+    }
+
+    if (activeAssets.rbs70) {
+        assets.push({
+            system_type: "RBS 70 MANPADS",
+            count: 4,
+            ready_state: "READY",
+            effective_range_km: 5,
+            response_time_minutes: 5,
+            cost_per_engagement: 50000,
+            success_rate: 0.75,
+            location: "Mobile units",
+            requires_nato_clearance: false,
+            requires_swedish_clearance: true
+        });
+    }
+
+    // Build payload matching API structure
+    const payload = {
+        threat: {
+            contacts: contacts,
+            threat_type: "Transport Aircraft",
+            priority: document.getElementById('priority').value,
+            estimated_bearing: avgBearing,
+            estimated_range_nm: avgRange,
+            time_to_boundary_minutes: parseFloat(document.getElementById('time-to-boundary').value),
+            target_description: "Unknown aircraft approaching Swedish airspace"
+        },
+        assets: assets,
+        context: {
+            location: document.getElementById('location').value,
+            weather: document.getElementById('weather').value,
+            visibility_km: 8.0,
+            nato_air_policing_active: document.getElementById('nato-active').checked,
+            allied_aircraft_in_area: document.getElementById('allied-aircraft').checked,
+            civilian_traffic_nearby: false,
+            strategic_assets_nearby: ["Gotland garrison"],
+            expected_follow_on_activity: false,
+            historical_pattern: document.getElementById('historical-pattern').value
+        }
+    };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Unknown error');
+
+        displayResults(result);
+
+    } catch (error) {
+        console.error('Calculation error:', error);
+        document.getElementById('status-text').textContent = 'FEL';
+        
+        // Show error
+        document.getElementById('calculating-view').classList.add('hidden');
+        document.getElementById('recommendations-view').classList.remove('hidden');
+        document.getElementById('recommendations-container').innerHTML = `
+            <div style="padding: 40px; text-align: center; color: var(--red);">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠</div>
+                <div style="font-size: 13px; margin-bottom: 8px;">API-fel</div>
+                <div style="font-size: 11px; color: var(--gray); font-family: monospace;">
+                    ${error.message}
+                </div>
+            </div>
+        `;
+    } finally {
+        isCalculating = false;
+    }
+}
+
+        function displayResults(result) {
+            allRecommendations = result.ranked_recommendations;
+            
+            document.getElementById('status-text').textContent = 'OPERATIVT';
+            document.getElementById('calculating-view').classList.add('hidden');
+            document.getElementById('recommendations-view').classList.remove('hidden');
+
+            // Update sensor agreement indicator
+            const agreement = result.threat_summary.sensor_agreement || 0.6;
+            const agreementFill = document.getElementById('agreement-fill');
+            agreementFill.style.width = (agreement * 100) + '%';
+            agreementFill.className = 'agreement-fill ' + 
+                (agreement >= 0.8 ? 'agreement-high' : 
+                 agreement >= 0.6 ? 'agreement-medium' : 'agreement-low');
+
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '';
+
+            result.ranked_recommendations.forEach((rec, index) => {
+                const coherenceClass = rec.coherence >= 0.80 ? 'coherence-high' :
+                                      rec.coherence >= 0.70 ? 'coherence-medium' :
+                                      'coherence-low';
+
+                const confidenceLabel = rec.coherence >= 0.80 ? 'HÖG TILLFÖRLITLIGHET' :
+                                       rec.coherence >= 0.70 ? 'MEDEL TILLFÖRLITLIGHET' :
+                                       'LÅG TILLFÖRLITLIGHET';
+
+                const div = document.createElement('div');
+                div.className = 'rec-card';
+                div.onclick = () => selectRecommendation(rec, div);
+
+                div.innerHTML = `
+                    <div class="rec-rank">${index === 0 ? 'OPTIMAL' : 'ALTERNATIV ' + index}</div>
+                    <div class="rec-coherence ${coherenceClass}">${rec.coherence.toFixed(4)}</div>
+                    <div class="confidence-label ${coherenceClass}">${confidenceLabel}</div>
+                    <div class="rec-title">${rec.title}</div>
+                    <div class="rec-meta">
+                        <div class="rec-meta-item">
+                            <div class="rec-meta-label">KOSTNAD</div>
+                            <div class="rec-meta-value">${(rec.estimated_cost_sek / 1000).toFixed(0)}K SEK</div>
+                        </div>
+                        <div class="rec-meta-item">
+                            <div class="rec-meta-label">FRAMGÅNG</div>
+                            <div class="rec-meta-value">${rec.estimated_success_rate}%</div>
+                        </div>
+                    </div>
+                    ${rec.swedish_sovereignty ? 
+                        '<div class="sovereignty-badge sovereignty-maintained">✓ SVENSK SUVERÄNITET</div>' : ''}
+                    ${rec.nato_coordination ? 
+                        '<div class="sovereignty-badge nato-required">NATO KOORDINATION</div>' : ''}
+                `;
+
+                container.appendChild(div);
+            });
+
+            // Auto-select first recommendation
+            if (allRecommendations.length > 0) {
+                setTimeout(() => {
+                    const firstCard = container.querySelector('.rec-card');
+                    if (firstCard) {
+                        selectRecommendation(allRecommendations[0], firstCard);
+                    }
+                }, 100);
+            }
+        }
+
+        function selectRecommendation(rec, element) {
+            document.querySelectorAll('.rec-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedStrategy = rec;
+
+            showDetail(rec);
+        }
+
+        function showDetail(rec) {
+            document.getElementById('detail-empty').classList.add('hidden');
+            document.getElementById('detail-content').classList.remove('hidden');
+
+            const coherenceClass = rec.coherence >= 0.80 ? 'coherence-high' :
+                                  rec.coherence >= 0.70 ? 'coherence-medium' :
+                                  'coherence-low';
+
+            const confidenceLabel = rec.coherence >= 0.80 ? 'HÖG TILLFÖRLITLIGHET' :
+                                   rec.coherence >= 0.70 ? 'MEDEL TILLFÖRLITLIGHET' :
+                                   'LÅG TILLFÖRLITLIGHET';
+
+            const systemsBadges = rec.assets_used ? 
+                rec.assets_used.map(s => `<span class="system-badge">${s}</span>`).join('') : '';
+
+            document.getElementById('detail-content').innerHTML = `
+                <div class="detail-coherence">
+                    <div class="detail-coherence-label">KOHERENS</div>
+                    <div class="detail-coherence-value ${coherenceClass}">${rec.coherence.toFixed(4)}</div>
+                    <div class="confidence-label ${coherenceClass}" style="margin-top: 8px;">${confidenceLabel}</div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">STRATEGI</div>
+                    <div class="detail-value">${rec.title}</div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">BESKRIVNING</div>
+                    <div class="detail-value">${rec.description}</div>
+                </div>
+
+                ${rec.assets_used && rec.assets_used.length > 0 ? `
+                <div class="detail-section">
+                    <div class="detail-label">SYSTEM</div>
+                    <div class="systems-list">${systemsBadges}</div>
+                </div>` : ''}
+
+                <div class="detail-section">
+                    <div class="detail-label">KOSTNAD</div>
+                    <div class="detail-value">${(rec.estimated_cost_sek / 1000).toFixed(0)}K SEK</div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">FRAMGÅNGSSANNOLIKHET</div>
+                    <div class="detail-value">${rec.estimated_success_rate}%</div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">SUVERÄNITET</div>
+                    <div class="detail-value">${rec.swedish_sovereignty ? '✓ Bibehållen' : '✗ Komprometterad'}</div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-label">NATO KOORDINATION</div>
+                    <div class="detail-value">${rec.nato_coordination ? 'Krävs' : 'Ej nödvändig'}</div>
+                </div>
+
+                <button class="execute-button" onmousedown="startExecute()" onmouseup="cancelExecute()" onmouseleave="cancelExecute()">
+                    HÅLL NED FÖR ATT VERKSTÄLLA
+                    <div class="execute-progress"></div>
+                </button>
+            `;
+        }
+
+        let executeTimeout = null;
+
+        function startExecute() {
+            const btn = event.target.closest('.execute-button');
+            btn.classList.add('holding');
+            
+            executeTimeout = setTimeout(() => {
+                executeCommand();
+            }, 2000);
+        }
+
+        function cancelExecute() {
+            if (executeTimeout) {
+                clearTimeout(executeTimeout);
+                executeTimeout = null;
+            }
+            const btn = document.querySelector('.execute-button');
+            if (btn) btn.classList.remove('holding');
+        }
+
+        function executeCommand() {
+            alert('Kommando verkställt!\n\nI produktionssystemet skulle detta:\n- Logga beslutet\n- Notifiera berörda system\n- Dokumentera för granskning');
+        }
+
+        // Add change listeners to all inputs
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.input-field, select, input[type="checkbox"]').forEach(input => {
+                input.addEventListener('change', autoCalculate);
+            });
+
+            // Initial calculation
+            setTimeout(() => autoCalculate(), 1000);
+        });
+    </script>
+</body>
+</html>

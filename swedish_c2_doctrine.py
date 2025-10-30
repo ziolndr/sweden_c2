@@ -665,7 +665,7 @@ METOD: EW-först, kinetisk backup
 class SwedishC2Service:
     """Main C2 service: Generate options + ARBITER evaluation"""
     
-    def __init__(self, arbiter_url: str = "http://api.arbiter.traut.ai/v1/compare"):
+    def __init__(self, arbiter_url: str = "https://api.arbiter.traut.ai/v1/compare"):
         self.arbiter_url = arbiter_url
     
     def process_multi_sensor_scenario(self,

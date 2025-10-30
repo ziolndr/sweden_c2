@@ -285,8 +285,8 @@ async def process_c2_scenario(request: C2Request):
         threat, assets, context = api_to_doctrine_models(request)
         
         # Initialize C2 service
-        service = SwedishC2Service(arbiter_url="api.arbiter.traut.ai")
-        
+        service = SwedishC2Service(arbiter_url="https://api.arbiter.traut.ai/v1/compare")
+
         # Process scenario
         result = service.process_multi_sensor_scenario(
             threat=threat,

@@ -525,15 +525,25 @@ METOD: EW-först, kinetisk backup
             
             time_margin = threat.time_to_boundary_minutes - (qra[0].response_time_minutes if qra else 15)
             
+            # Safe sensor data extraction with fallbacks
+            bearing_9lv = contacts_by_source['9LV'].bearing if '9LV' in contacts_by_source else 'N/A'
+            range_9lv = contacts_by_source['9LV'].range_nm if '9LV' in contacts_by_source else 0
+
+            bearing_gba = contacts_by_source['GBA_C2'].bearing if 'GBA_C2' in contacts_by_source else (threat.contacts[1].bearing if len(threat.contacts) > 1 else threat.contacts[0].bearing)
+            range_gba = contacts_by_source['GBA_C2'].range_nm if 'GBA_C2' in contacts_by_source else (threat.contacts[1].range_nm if len(threat.contacts) > 1 else threat.contacts[0].range_nm)
+
+            bearing_bms = contacts_by_source['BMS'].bearing if 'BMS' in contacts_by_source else threat.contacts[-1].bearing
+            range_bms = contacts_by_source['BMS'].range_nm if 'BMS' in contacts_by_source else threat.contacts[-1].range_nm
+
             return {
                 'sensor_count': len(threat.contacts),
                 'agreement_percent': int(agreement * 100),
-                'bearing_9lv': contacts_by_source.get('9LV', threat.contacts[0]).bearing if '9LV' in contacts_by_source else 'N/A',
-                'range_9lv': contacts_by_source.get('9LV', threat.contacts[0]).range_nm if '9LV' in contacts_by_source else 0,
-                'bearing_gba': contacts_by_source.get('GBA_C2', threat.contacts[1] if len(threat.contacts) > 1 else threat.contacts[0]).bearing,
-                'range_gba': contacts_by_source.get('GBA_C2', threat.contacts[1] if len(threat.contacts) > 1 else threat.contacts[0]).range_nm,
-                'bearing_bms': contacts_by_source.get('BMS', threat.contacts[-1]).bearing,
-                'range_bms': contacts_by_source.get('BMS', threat.contacts[-1]).range_nm,
+                'bearing_9lv': bearing_9lv,
+                'range_9lv': range_9lv,
+                'bearing_gba': bearing_gba,
+                'range_gba': range_gba,
+                'bearing_bms': bearing_bms,
+                'range_bms': range_bms,
                 'time_to_boundary': threat.time_to_boundary_minutes,
                 'qra_time': qra[0].response_time_minutes if qra else 15,
                 'time_margin': max(0, time_margin),

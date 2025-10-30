@@ -9,7 +9,7 @@ Integrates:
 - BMS Ground Surveillance
 - NATO Air Policing coordination
 
-Created by: Joel Trout & Erik Andersson
+Created by: Joel Trout
 For: Swedish Armed Forces / FOI validation
 Version: 1.0
 """

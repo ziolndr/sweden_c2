@@ -165,8 +165,8 @@ class SwedishAirDefenseDoctrine:
         'sovereign_qra_launch': {
             'title': 'Suverän QRA-start: Omedelbar visuell identifiering',
             'trigger': lambda t, a, c: (
-                t.priority in [ContactPriority.CRITICAL, ContactPriority.HIGH] and
-                t.time_to_boundary_minutes < 15 and
+                t.priority in [ContactPriority.CRITICAL, ContactPriority.HIGH, ContactPriority.MEDIUM] and
+                t.time_to_boundary_minutes < 20 and
                 any(asset.system_type == SystemType.GRIPEN_QRA for asset in a)
             ),
             'template': """

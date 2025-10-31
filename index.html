@@ -1319,19 +1319,23 @@ async function calculateRecommendations() {
             // Generate target ID based on date
             const targetId = `T-${now.toISOString().slice(0, 10)}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
 
+            // Get strategy name safely
+            const strategyName = selectedStrategy?.name || 'SUVERÄN QRA UPPSTART';
+
             // Populate modal with data
-            document.getElementById('modal-strategy-name').textContent = selectedStrategy ? selectedStrategy.name : 'SUVERÄN QRA UPPSTART';
+            document.getElementById('modal-strategy-name').textContent = strategyName;
             document.getElementById('modal-target-id').textContent = targetId;
             document.getElementById('modal-timestamp').textContent = timestamp;
 
             // Determine which systems to notify based on strategy
             let systems = [];
-            if (selectedStrategy) {
-                if (selectedStrategy.name.includes('QRA') || selectedStrategy.name.includes('GRIPEN')) {
+            if (selectedStrategy && selectedStrategy.name) {
+                const name = selectedStrategy.name.toUpperCase();
+                if (name.includes('QRA') || name.includes('GRIPEN')) {
                     systems = ['F 21 Luleå Wing Operations', 'GBA C2 Network', 'FMV Command Log'];
-                } else if (selectedStrategy.name.includes('PATRIOT')) {
+                } else if (name.includes('PATRIOT')) {
                     systems = ['LV 6 Air Defense Regiment', 'GBA C2 Network', 'NATO Air Command'];
-                } else if (selectedStrategy.name.includes('NATO')) {
+                } else if (name.includes('NATO')) {
                     systems = ['NATO Air Command Ramstein', 'Allied Air Command', 'Joint Force Command'];
                 } else {
                     systems = ['GBA C2 Network', 'FMV Command Log', 'Försvarsmakten HKV'];

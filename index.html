@@ -496,6 +496,120 @@
             width: 100%;
         }
 
+        .execute-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .execute-modal.active {
+            display: flex;
+        }
+
+        .execute-modal-content {
+            background: var(--dark);
+            border: 2px solid var(--yellow);
+            border-radius: 2px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(255, 184, 0, 0.3);
+        }
+
+        .execute-modal-header {
+            background: var(--yellow);
+            color: var(--black);
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .execute-modal-body {
+            padding: 24px 20px;
+        }
+
+        .execute-modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        .execute-modal-row:last-child {
+            border-bottom: none;
+        }
+
+        .execute-modal-label {
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .execute-modal-value {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .execute-modal-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .execute-modal-section-title {
+            color: var(--gray);
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .execute-modal-item {
+            color: var(--white);
+            font-size: 12px;
+            padding: 6px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .execute-modal-item:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        .execute-modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .execute-modal-button {
+            width: 100%;
+            padding: 14px;
+            background: var(--blue);
+            color: var(--white);
+            border: none;
+            border-radius: 2px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .execute-modal-button:hover {
+            background: #005a8f;
+        }
+
         .calculating-indicator {
             text-align: center;
             padding: 40px 20px;
@@ -741,6 +855,39 @@
 
             <div id="detail-content" class="detail-content hidden">
                 <!-- Strategy detail will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- EXECUTE CONFIRMATION MODAL -->
+    <div id="execute-modal" class="execute-modal">
+        <div class="execute-modal-content">
+            <div class="execute-modal-header">
+                KOMMANDO VERKSTÄLLT
+            </div>
+            <div class="execute-modal-body">
+                <div class="execute-modal-row">
+                    <div class="execute-modal-label">Rekommendation</div>
+                    <div class="execute-modal-value" id="modal-strategy-name">-</div>
+                </div>
+                <div class="execute-modal-row">
+                    <div class="execute-modal-label">Mål-ID</div>
+                    <div class="execute-modal-value" id="modal-target-id">-</div>
+                </div>
+                <div class="execute-modal-row">
+                    <div class="execute-modal-label">Beslut loggat</div>
+                    <div class="execute-modal-value" id="modal-timestamp">-</div>
+                </div>
+
+                <div class="execute-modal-section">
+                    <div class="execute-modal-section-title">SYSTEM NOTIFIERADE</div>
+                    <div class="execute-modal-item" id="modal-system-1">-</div>
+                    <div class="execute-modal-item" id="modal-system-2">-</div>
+                    <div class="execute-modal-item" id="modal-system-3">-</div>
+                </div>
+            </div>
+            <div class="execute-modal-footer">
+                <button class="execute-modal-button" onclick="closeModal()">STÄNG</button>
             </div>
         </div>
     </div>
@@ -1165,7 +1312,48 @@ async function calculateRecommendations() {
         }
 
         function executeCommand() {
-            alert('Kommando verkställt!\n\nI produktionssystemet skulle detta:\n- Logga beslutet\n- Notifiera berörda system\n- Dokumentera för granskning');
+            // Get current timestamp
+            const now = new Date();
+            const timestamp = now.toISOString().slice(0, 19).replace('T', ' ');
+
+            // Generate target ID based on date
+            const targetId = `T-${now.toISOString().slice(0, 10)}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+
+            // Populate modal with data
+            document.getElementById('modal-strategy-name').textContent = selectedStrategy ? selectedStrategy.name : 'SUVERÄN QRA UPPSTART';
+            document.getElementById('modal-target-id').textContent = targetId;
+            document.getElementById('modal-timestamp').textContent = timestamp;
+
+            // Determine which systems to notify based on strategy
+            let systems = [];
+            if (selectedStrategy) {
+                if (selectedStrategy.name.includes('QRA') || selectedStrategy.name.includes('GRIPEN')) {
+                    systems = ['F 21 Luleå Wing Operations', 'GBA C2 Network', 'FMV Command Log'];
+                } else if (selectedStrategy.name.includes('PATRIOT')) {
+                    systems = ['LV 6 Air Defense Regiment', 'GBA C2 Network', 'NATO Air Command'];
+                } else if (selectedStrategy.name.includes('NATO')) {
+                    systems = ['NATO Air Command Ramstein', 'Allied Air Command', 'Joint Force Command'];
+                } else {
+                    systems = ['GBA C2 Network', 'FMV Command Log', 'Försvarsmakten HKV'];
+                }
+            } else {
+                systems = ['F 21 Luleå Wing Operations', 'GBA C2 Network', 'FMV Command Log'];
+            }
+
+            document.getElementById('modal-system-1').textContent = systems[0];
+            document.getElementById('modal-system-2').textContent = systems[1];
+            document.getElementById('modal-system-3').textContent = systems[2];
+
+            // Show modal
+            document.getElementById('execute-modal').classList.add('active');
+
+            // Remove holding state from button
+            const btn = document.querySelector('.execute-button');
+            if (btn) btn.classList.remove('holding');
+        }
+
+        function closeModal() {
+            document.getElementById('execute-modal').classList.remove('active');
         }
 
         // Add change listeners to all inputs

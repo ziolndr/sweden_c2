@@ -355,8 +355,7 @@ SUVERÄNITET: BIBEHÅLLEN
             'title': 'Minimal respons: Rutinmässig övervakning',
             'trigger': lambda t, a, c: (
                 t.priority == ContactPriority.LOW and
-                t.range_nm > 50 and
-                c.historical_pattern == "Routine Russian patrol"
+                t.estimated_range_nm > 50
             ),
             'template': """
 ALTERNATIV: Minimal respons - fortsatt övervakning
